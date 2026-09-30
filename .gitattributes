@@ -1,0 +1,9 @@
+# The skill and its agent prompts are read by shells, Python, and CI on Linux.
+# Normalize to LF in the repository so byte comparisons and greps behave the
+# same on every machine.
+* text=auto eol=lf
+
+# Never let a checkout rewrite these.
+*.png binary
+*.jpg binary
+*.zip binary

@@ -1,0 +1,677 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>polish-website: check an AI-built app before it ships</title>
+<meta name="description" content="An agent skill that audits an AI-built site or app before launch: security, legal, AI-looking design and copy, and app store readiness. Every fix comes with proof.">
+<link rel="canonical" href="https://polish-website.vercel.app/">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#FBFAF6">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="polish-website">
+<meta property="og:url" content="https://polish-website.vercel.app/">
+<meta property="og:title" content="polish-website">
+<meta property="og:description" content="A vibecoded app usually runs. It can also serve its database to anyone holding the public key. This agent skill finds that before launch and fixes what code can fix.">
+<meta property="og:image" content="https://polish-website.vercel.app/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="polish-website, with a P0 to P3 severity scale and four areas: security, legal, AI tells, app stores.">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareSourceCode",
+  "name": "polish-website",
+  "description": "An agent skill that audits and fixes an AI-built website or app before launch, across security, legal compliance, AI-looking design and copy, and App Store and Google Play readiness.",
+  "url": "https://polish-website.vercel.app/",
+  "codeRepository": "https://github.com/jgoetzmann/polish-website",
+  "license": "https://opensource.org/licenses/MIT",
+  "programmingLanguage": ["Python", "Markdown"],
+  "version": "1.0.0",
+  "author": { "@type": "Person", "name": "Jack Goetzmann", "url": "https://github.com/jgoetzmann" }
+}
+</script>
+<style>
+  /* One idea: the page is a printed inspection report. Paper, ink, one red for
+     severity, one highlighter yellow for marks. Serif for prose, mono for
+     anything a tool printed. Spacing uses --s1..--s8 only. */
+  :root{
+    --desk:#E7E2D7;
+    --paper:#FBFAF6;
+    --ink:#1C1B18;
+    --muted:#5A564D;
+    --rule:#CFC8B9;
+    --edge:#8F887A;
+    --red:#B3261E;
+    --mark:#FBE16B;
+    --serif:Charter,"Bitstream Charter","Sitka Text",Cambria,Georgia,serif;
+    --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+    --s1:4px;--s2:8px;--s3:12px;--s4:16px;--s5:24px;--s6:32px;--s7:48px;--s8:64px;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%;background:var(--desk)}
+  body{margin:0;color:var(--ink);font:400 18px/1.6 var(--serif)}
+  ::selection{background:var(--mark);color:var(--ink)}
+  a{color:var(--ink);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}
+  a:hover{color:var(--red);text-decoration-thickness:2px}
+  :focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+  mark{background:var(--mark);color:var(--ink);padding:0 2px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+  code,pre,kbd{font-family:var(--mono)}
+  p code,li code,td code{font-size:.86em;background:#F0EDE5;padding:1px var(--s1)}
+  p{margin:0 0 var(--s4);max-width:66ch}
+  .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+  .skip{position:absolute;left:var(--s4);top:var(--s4);padding:var(--s2) var(--s3);background:var(--paper);border:1px solid var(--ink);transform:translateY(-200%)}
+  .skip:focus{transform:none}
+
+  /* ---- the sheet ---- */
+  .sheet{max-width:880px;margin:var(--s7) auto;background:var(--paper);border:1px solid var(--edge);padding:var(--s7) var(--s8) var(--s6)}
+
+  /* ---- form header ---- */
+  .form{display:grid;grid-template-columns:repeat(4,1fr);margin:0 0 var(--s7);border:1px solid var(--ink)}
+  .form div{padding:var(--s2) var(--s3);border-left:1px solid var(--ink)}
+  .form div:first-child{border-left:0}
+  .form dt{font:600 11px/1.3 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .form dd{margin:var(--s1) 0 0;font:500 14px/1.3 var(--mono)}
+
+  h1{font:700 clamp(40px,7.4vw,68px)/1.02 var(--serif);letter-spacing:-.015em;margin:0 0 var(--s5)}
+  .lede{font-size:clamp(20px,2.6vw,24px);line-height:1.45;max-width:34em;margin-bottom:var(--s5)}
+  .actions{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s3) var(--s5);margin:var(--s6) 0 0;font:15px/1.3 var(--mono)}
+
+  /* ---- sections ---- */
+  main{margin-top:var(--s8)}
+  section{border-top:2px solid var(--ink);padding:var(--s5) 0 var(--s7)}
+  .head{display:flex;gap:var(--s4);align-items:baseline;margin:0 0 var(--s5)}
+  .num{font:700 14px/1 var(--mono);color:var(--red);min-width:2ch}
+  h2{font:700 30px/1.15 var(--serif);letter-spacing:-.01em;margin:0}
+  h3{font:700 13px/1.3 var(--mono);letter-spacing:.08em;text-transform:uppercase;margin:0 0 var(--s2)}
+  .note{font-size:16px;color:var(--muted)}
+  h3.gap{margin-top:var(--s6)}
+  .cols{display:grid;grid-template-columns:1fr;gap:var(--s5) var(--s6)}
+  @media (min-width:720px){.cols{grid-template-columns:1fr 1fr}}
+  .cols p{margin:0}
+
+  /* ---- printed output: findings, commands ---- */
+  .print{border:1px solid var(--ink);margin:0 0 var(--s5);background:var(--paper)}
+  .print-bar{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:var(--s2) var(--s4);padding:var(--s2) var(--s3);border-bottom:1px solid var(--ink);font:13px/1.3 var(--mono);color:var(--muted)}
+  .print pre{margin:0;padding:var(--s4);font-size:15px;line-height:1.55;white-space:pre-wrap;overflow-wrap:break-word}
+  /* Commands scroll instead of wrapping, so a wrapped line never looks like two commands. */
+  .print pre.cmd{white-space:pre;overflow-x:auto}
+  figure.print{margin:0 0 var(--s5)}
+  .print pre b{font-weight:700}
+  .k{color:var(--muted)}
+
+  /* The severity scale: four boxes, the matching one inked. */
+  .sev{display:inline-flex;font:700 12px/1 var(--mono);color:var(--ink)}
+  .sev span{border:1px solid var(--ink);padding:var(--s1) 0;width:34px;text-align:center}
+  .sev span+span{border-left:0}
+  .sev .on{background:var(--red);border-color:var(--red);color:#fff}
+  .sev .on.lo{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+
+  table{width:100%;border-collapse:collapse;font-size:17px;margin:0 0 var(--s5)}
+  th{font:600 12px/1.3 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:left;padding:0 var(--s3) var(--s2) 0;border-bottom:1px solid var(--ink);vertical-align:bottom}
+  td{padding:var(--s3) var(--s3) var(--s3) 0;border-bottom:1px solid var(--rule);vertical-align:top}
+  td:first-child{font:700 15px/1.6 var(--mono);width:4.5em}
+  th:last-child,td:last-child{text-align:right;padding-right:0;white-space:nowrap}
+  td:last-child{font:15px/1.6 var(--mono)}
+  .sevtable td:first-child{width:3.5em}
+  .sevtable td:last-child,.sevtable th:last-child{white-space:normal;text-align:left}
+  .sevtable td:last-child{font:inherit}
+
+  /* ---- the bench ---- */
+  .bench{border:2px solid var(--ink);margin:0 0 var(--s4)}
+  .bench-bar{display:flex;flex-wrap:wrap;justify-content:space-between;gap:var(--s1) var(--s4);padding:var(--s2) var(--s4);background:var(--ink);color:var(--paper);font:13px/1.4 var(--mono)}
+  .bench label{display:block;padding:var(--s4) var(--s4) var(--s2);font:600 12px/1.3 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .bench textarea{display:block;width:calc(100% - var(--s6));margin:0 var(--s4);min-height:104px;resize:vertical;padding:var(--s3);border:1px solid var(--ink);border-radius:0;background:#fff;color:var(--ink);font:16px/1.5 var(--mono)}
+  .samples{display:flex;flex-wrap:wrap;gap:var(--s2);padding:var(--s3) var(--s4) var(--s4)}
+  .samples-label{width:100%;font:13px/1.3 var(--mono);color:var(--muted);margin:0}
+  .verdict{border-top:2px solid var(--ink);padding:var(--s4)}
+  .verdict-line{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s2) var(--s3);margin:0;font:15px/1.4 var(--mono);max-width:none}
+  .verdict .print{margin:var(--s4) 0 0}
+  .verdict .print pre{font-size:14px}
+  .verdict .aside{margin:var(--s3) 0 0;font:14px/1.5 var(--mono);color:var(--muted);max-width:none}
+
+  /* One button style, used for every button and the install link. */
+  .btn{display:inline-block;font:500 14px/1.2 var(--mono);color:var(--ink);background:var(--paper);border:1px solid var(--ink);border-radius:0;padding:var(--s2) var(--s3);cursor:pointer;text-decoration:none}
+  .btn:hover{background:var(--ink);color:var(--paper)}
+  .btn:active{transform:translateY(1px)}
+
+  /* ---- punch list ---- */
+  .punch{list-style:none;margin:0 0 var(--s5);padding:0;max-width:66ch}
+  .punch li{position:relative;padding:var(--s3) 0 var(--s3) var(--s6);border-bottom:1px solid var(--rule)}
+  .punch li:first-child{border-top:1px solid var(--rule)}
+  .punch li::before{content:"";position:absolute;left:0;top:calc(var(--s3) + 6px);width:16px;height:16px;border:2px solid var(--ink)}
+  .punch.no li::before{top:calc(var(--s3) + 13px);height:0;border-width:2px 0 0;border-color:var(--red)}
+
+  .groups{display:grid;grid-template-columns:1fr;gap:var(--s5) var(--s6)}
+  @media (min-width:720px){.groups{grid-template-columns:1fr 1fr}}
+  .groups p{margin:0;font-size:17px}
+
+  /* ---- footer ---- */
+  footer{border-top:2px solid var(--ink);padding:var(--s5) 0 0;font-size:16px;color:var(--muted)}
+  footer p{max-width:none}
+  footer a{color:var(--ink)}
+  .links{display:flex;flex-wrap:wrap;gap:var(--s2) var(--s5);font:15px/1.4 var(--mono);margin-bottom:var(--s5)}
+
+  @media (max-width:640px){
+    body{font-size:17px}
+    .sheet{margin:0;border:0;padding:var(--s5) var(--s4) var(--s5)}
+    .form{grid-template-columns:1fr 1fr}
+    .form div:nth-child(3){border-left:0}
+    .form div:nth-child(n+3){border-top:1px solid var(--ink)}
+    main{margin-top:var(--s7)}
+    h2{font-size:25px}
+    .print pre{padding:var(--s3);font-size:14px}
+    .bench textarea{width:calc(100% - var(--s5));margin:0 var(--s3)}
+    .bench label,.samples,.verdict{padding-left:var(--s3);padding-right:var(--s3)}
+    td:first-child{width:3em}
+  }
+  @media (prefers-reduced-motion:no-preference){
+    html{scroll-behavior:smooth}
+    .sev .on.new{animation:ink .18s ease-out 1}
+    @keyframes ink{from{transform:scale(1.3)}to{transform:scale(1)}}
+  }
+  @media print{
+    html{background:#fff}
+    .sheet{margin:0;border:0;padding:0;max-width:none}
+    .samples,.btn,.skip{display:none}
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="sheet">
+
+<header>
+  <dl class="form">
+    <div><dt>Type</dt><dd>Agent skill</dd></div>
+    <div><dt>Version</dt><dd>1.0.0</dd></div>
+    <div><dt>License</dt><dd>MIT</dd></div>
+    <div><dt>Runs on</dt><dd>Any agent with skills</dd></div>
+  </dl>
+
+  <h1>polish-website</h1>
+
+  <p class="lede">A vibecoded app usually runs. It can also <mark>serve its database to anyone
+  holding the public key</mark>, and the owner tends to find out last.</p>
+
+  <p>This agent skill audits an AI-built site or app before launch, across security, legal,
+  design and copy, and App Store and Google Play readiness. Two scripts gather the evidence,
+  read-only agents confirm it, and every fix comes with the command that proves it worked.</p>
+
+  <p class="actions">
+    <a class="btn" href="#install">Install</a>
+    <a href="/SKILL.md">Read SKILL.md</a>
+    <a href="https://github.com/jgoetzmann/polish-website">Source on GitHub</a>
+  </p>
+</header>
+
+<main id="main">
+
+<section aria-labelledby="h-exhibit">
+  <div class="head"><span class="num">1</span><h2 id="h-exhibit">Exhibit A: two findings</h2></div>
+  <p>Every finding, from the scripts and from the agents, has the same six lines. It names
+  the place, quotes the proof with secrets redacted, and ends with the command that shows the
+  fix worked. These two come from a made-up app.</p>
+
+  <figure class="print">
+    <figcaption class="print-bar"><span>scan.py, reading the repo</span>
+      <span class="sev" aria-hidden="true"><span class="on">P0</span><span>P1</span><span>P2</span><span>P3</span></span></figcaption>
+<pre><b>### S08 · P0 · data · AGENT</b>
+<span class="k">Where:</span> supabase/migrations/0003_invoices.sql:1
+<span class="k">Evidence:</span> create table public.invoices (
+<span class="k">Why:</span> Supabase serves every public table over its REST API with the anon key from your frontend, so without RLS anyone can read and change every row of invoices.
+<span class="k">Fix:</span> Add `alter table public.invoices enable row level security;` and policies scoped to `(select auth.uid())`.
+<span class="k">Verify:</span> python3 scripts/scan.py --only S08 .</pre>
+  </figure>
+
+  <figure class="print">
+    <figcaption class="print-bar"><span>probe.py, reading the live site</span>
+      <span class="sev" aria-hidden="true"><span class="on">P0</span><span>P1</span><span>P2</span><span>P3</span></span></figcaption>
+<pre><b>### W01 · P0 · secrets · HUMAN</b>
+<span class="k">Where:</span> https://staging.example.app/assets/index-7f3c9a.js
+<span class="k">Evidence:</span> Supabase service_role JWT eyJhbG…Qm4s (219 chars) in the file every visitor downloads
+<span class="k">Why:</span> Anyone can open this file in the browser, copy the key, and spend your money or read your data with it.
+<span class="k">Fix:</span> Move the call that needs this key into a server route or edge function and read the key from a server-only env var. Then rotate the key in the provider dashboard: removing it from the bundle does not un-leak it.
+<span class="k">Verify:</span> python3 scripts/probe.py --only W01 https://staging.example.app</pre>
+  </figure>
+
+  <p>Severity comes from a fixed table, not from how alarming a finding sounds:</p>
+  <table class="sevtable">
+    <thead><tr><th scope="col">Level</th><th scope="col">Means</th></tr></thead>
+    <tbody>
+      <tr><td>P0</td><td>exploitable now by an anonymous visitor, or a certain store rejection</td></tr>
+      <tr><td>P1</td><td>exploitable by a signed-in user, a legal duty with a per-incident penalty, or a likely store rejection</td></tr>
+      <tr><td>P2</td><td>hardening, or a legal or store item that depends on a fact the owner must confirm</td></tr>
+      <tr><td>P3</td><td>an AI tell, polish, or anything cosmetic</td></tr>
+    </tbody>
+  </table>
+  <p>The owner is <code>AGENT</code> when a code change fixes it, and <code>HUMAN</code> when
+  it needs a dashboard, a store console, a lawyer, a key rotation, or content only you know.</p>
+</section>
+
+<section aria-labelledby="h-bench">
+  <div class="head"><span class="num">2</span><h2 id="h-bench">Try a line</h2></div>
+  <p>Paste a line of code or HTML. Six of the scanner's checks run on it, rewritten in
+  JavaScript for this page. It is a subset: the real <code>scan.py</code> runs 68 checks
+  across a whole repo, and <code>probe.py</code> runs 16 more against the live site.</p>
+
+  <div class="bench">
+    <div class="bench-bar"><span>S01 S02 S07 L01 D15 D12</span><span>Runs in this tab. Nothing is sent.</span></div>
+    <label for="line">A line of code or HTML</label>
+    <textarea id="line" rows="3" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea>
+    <div class="samples" role="group" aria-labelledby="samples-label">
+      <p class="samples-label" id="samples-label">Or load a sample:</p>
+      <button type="button" class="btn" data-sample="openai">OpenAI in the browser</button>
+      <button type="button" class="btn" data-sample="service">service_role key</button>
+      <button type="button" class="btn" data-sample="anon">anon key</button>
+      <button type="button" class="btn" data-sample="fonts">Google Fonts link</button>
+      <button type="button" class="btn" data-sample="title">Scaffold title</button>
+      <button type="button" class="btn" data-sample="hero">Hero copy</button>
+    </div>
+    <div class="verdict">
+      <p class="verdict-line">
+        <span class="sev" id="scale" aria-hidden="true"><span>P0</span><span>P1</span><span>P2</span><span>P3</span></span>
+        <span id="summary" role="status">The checks need JavaScript. The rest of the page doesn't.</span>
+      </p>
+      <div id="results"></div>
+    </div>
+  </div>
+  <p class="note">Nothing you paste leaves this tab. The checks are regular expressions and
+  one base64 decode, and the page makes no network requests. S02 is cut down to its
+  service_role JWT check; the real rule also looks for Stripe, OpenAI, Anthropic, AWS, GitHub,
+  and other key formats. The JWT samples are built in
+  your browser and are not real keys.</p>
+</section>
+
+<section aria-labelledby="h-ideas">
+  <div class="head"><span class="num">3</span><h2 id="h-ideas">Two ideas</h2></div>
+  <p>An agent handed a checklist reads it, greps for a few items, and reports
+  "RLS enabled." So this skill runs on two ideas.</p>
+  <div class="cols">
+    <div>
+      <h3>Evidence before opinion</h3>
+      <p>Every finding carries the line or command output that proves it, and the command that
+      proves it's fixed. The scripts run first, so the mechanical checks happen the same way
+      every time. Each script finding must come back from an auditor confirmed or dismissed,
+      and triage drops any finding without evidence.</p>
+    </div>
+    <div>
+      <h3>Blind reviewers see what the public sees</h3>
+      <p>A reviewer who has read the code knows what the app means to do. Attackers,
+      regulators, store reviewers, and visitors see only what it does. So the stranger never
+      sees the repo, and the attacker gets a URL and two test accounts.</p>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="h-phases">
+  <div class="head"><span class="num">4</span><h2 id="h-phases">Seven phases</h2></div>
+  <table>
+    <thead><tr><th scope="col">Phase</th><th scope="col">What</th><th scope="col">Agents</th></tr></thead>
+    <tbody>
+      <tr><td>0</td><td>Map the app and its triggers</td><td>none</td></tr>
+      <tr><td>1</td><td>Scan: scripts, then stack tools</td><td>none</td></tr>
+      <tr><td>2</td><td>Audit, read-only, in parallel</td><td>3–6</td></tr>
+      <tr><td>3</td><td>Triage and report; the user approves fixes</td><td>none</td></tr>
+      <tr><td>4</td><td>Fix by file ownership, in waves</td><td>1/cluster</td></tr>
+      <tr><td>5</td><td>Verify: rerun, attack, fresh stranger</td><td>2</td></tr>
+      <tr><td>6</td><td>Handoff checklist</td><td>none</td></tr>
+    </tbody>
+  </table>
+  <p>Nothing in your code changes before you have seen the P0 and P1 list. If Phase 1 turns up
+  a live key, you hear about it right away, with the key to rotate and where, not in the
+  report.</p>
+
+  <h3 class="gap">Launch gate</h3>
+  <ul class="punch">
+    <li>Zero open P0. Every P1 is fixed, or you accepted it in the report in your own words.</li>
+    <li>The attack pass returns PASS or N/A for A1 through A10, each with the request and response.</li>
+    <li>A fresh stranger finds no P0 or P1, and no claim you can't back.</li>
+    <li>Native apps: on a fresh iPhone, iPad, and Android install, sign up, finish the core
+    flow, buy, restore, and delete the account.</li>
+  </ul>
+</section>
+
+<section aria-labelledby="h-checks">
+  <div class="head"><span class="num">5</span><h2 id="h-checks">What it checks</h2></div>
+  <div class="groups">
+    <div>
+      <h3>Security</h3>
+      <p>Keys behind public env prefixes. Secrets in bundles and git history. Tables with no
+      RLS, or RLS that lets everyone in. Users who can raise their own credits or role. Public
+      buckets, unverified Stripe webhooks, SQL built from strings, open CORS, exposed
+      <code>.env</code> and <code>.git</code> files, and missing headers. On your own Supabase
+      project, what the anon key can actually read.</p>
+    </div>
+    <div>
+      <h3>Legal</h3>
+      <p>Fonts loaded from Google's servers, and trackers or session replay that start before
+      consent. Missing privacy and terms pages. Pre-checked consent boxes. Accounts with no way
+      to delete them. Missing alt text, <code>lang</code>, and focus styles. Social proof
+      nobody can check.</p>
+    </div>
+    <div>
+      <h3>AI tells</h3>
+      <p>Purple-to-blue gradients, gradient text, glass cards, three icon boxes in a row, emoji
+      as icons, Inter everywhere, every section fading in on scroll, em dashes and stock
+      buzzwords, placeholder people, and tab titles like "Vite + React." One on its own is a
+      style. Five together is the finding.</p>
+    </div>
+    <div>
+      <h3>App stores</h3>
+      <p>Capacitor apps that only wrap a website, in-app account deletion, Sign in with Apple
+      parity, store billing and restore, the Android target SDK floor, sensitive permissions,
+      iOS privacy manifests, and permission prompts that don't say why.</p>
+    </div>
+  </div>
+</section>
+
+<section id="install" aria-labelledby="h-install">
+  <div class="head"><span class="num">6</span><h2 id="h-install">Install</h2></div>
+  <p>With the Skills CLI:</p>
+  <div class="print">
+    <div class="print-bar"><span>shell</span><button type="button" class="btn" data-copy="cmd-npx">Copy</button></div>
+<pre class="cmd" tabindex="0"><code id="cmd-npx">npx skills add jgoetzmann/polish-website --global</code></pre>
+  </div>
+  <p>Leave off <code>--global</code> to install into the current project only.</p>
+
+  <p>Claude Code 2.1.142 or newer can install it as a plugin:</p>
+  <div class="print">
+    <div class="print-bar"><span>Claude Code</span><button type="button" class="btn" data-copy="cmd-plugin">Copy</button></div>
+<pre class="cmd" tabindex="0"><code id="cmd-plugin">/plugin marketplace add jgoetzmann/polish-website
+/plugin install polish-website@polish-website</code></pre>
+  </div>
+  <p>The plugin command is <code>/polish-website:polish-website</code>. Or ask in
+  plain words: "Is my Lovable app safe to launch?" or "Will Apple reject this Capacitor app?"</p>
+
+  <p>The two scripts also run on their own, with no agent. They need Python 3.9 or newer and
+  nothing else:</p>
+  <div class="print">
+    <div class="print-bar"><span>shell</span><button type="button" class="btn" data-copy="cmd-scripts">Copy</button></div>
+<pre class="cmd" tabindex="0"><code id="cmd-scripts">python3 scripts/scan.py path/to/app
+python3 scripts/probe.py https://staging.example.app
+python3 scripts/scan.py . --fail-on P1</code></pre>
+  </div>
+  <p class="note">The last line is a CI gate: it exits 1 on any P0 or P1.</p>
+  <p class="vh" id="copy-status" role="status"></p>
+</section>
+
+<section aria-labelledby="h-limits">
+  <div class="head"><span class="num">7</span><h2 id="h-limits">When not to use it</h2></div>
+  <ul class="punch no">
+    <li>On anything you don't own. The live checks and the attack pass run only against targets
+    the owner confirms, staging first.</li>
+    <li>As the only review of a system that moves money, holds health records, or has a team of
+    engineers. Run it, then get a professional pentest and a lawyer.</li>
+    <li>As legal advice. It is a starting point that tells you what to ask a lawyer.</li>
+  </ul>
+</section>
+
+</main>
+
+<footer>
+  <p class="links">
+    <a href="https://github.com/jgoetzmann/polish-website">Source on GitHub</a>
+    <a href="/SKILL.md">SKILL.md</a>
+    <a href="privacy.html">Privacy</a>
+    <a href="terms.html">Terms</a>
+    <a href="accessibility.html">Accessibility</a>
+  </p>
+  <p>polish-website 1.0.0, by Jack Goetzmann. MIT license. Markdown and stdlib Python, so
+  it works with any agent that supports skills. Questions go to
+  <a href="https://github.com/jgoetzmann/polish-website/issues">GitHub issues</a>.</p>
+  <p>Not legal advice. The legal checks point you at questions for a lawyer.</p>
+  <p>No tracking on this page: no cookies, no analytics, and nothing loaded from another
+  server.</p>
+</footer>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // The sample lines below trip the real scanner on purpose. Each one carries an
+  // owner suppression with its reason, and `python3 scripts/scan.py web` lists
+  // every suppression in its notes, so nothing is hidden.
+
+  // ---- rules, a subset of scripts/scan.py -----------------------------------
+
+  var PREFIX = /\b(NEXT_PUBLIC_|VITE_|EXPO_PUBLIC_|REACT_APP_|NUXT_PUBLIC_|GATSBY_|PUBLIC_)[A-Z0-9_]+/g;
+  var SENSITIVE = /SECRET|SERVICE_ROLE|SERVICE_KEY|PRIVATE|PASSWORD|SK_LIVE|STRIPE_SECRET|OPENAI|ANTHROPIC|DATABASE_URL|DB_URL|WEBHOOK_SECRET|RESEND|SENDGRID|TWILIO_AUTH/;
+  var BROWSER_SDK = /dangerouslyAllowBrowser\s*:\s*true\b/g;
+  var JWT = /\beyJ[A-Za-z0-9_-]{8,}\.eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}/g;
+  var FONTS = /fonts\.(?:googleapis|gstatic)\.com/g;
+  var DEFAULT_TITLE = new RegExp("<title>\\s*(?:Vite \\+ React(?: \\+ TS)?|Vite App|React App|Create Next App|Nuxt|SvelteKit|Astro)\\s*</title>" +
+    "|title\\s*:\\s*[\"']Create Next App[\"']|description\\s*:\\s*[\"']Generated by create next app[\"']", "gi");
+  var BUZZ = "seamless|seamlessly|elevate|unleash|empower|revolutionize|revolutionary|cutting-edge|game-changer|game-changing|next-level|supercharge|effortless|effortlessly|delve|leverage|robust|innovative|harness|streamline|world-class|best-in-class|state-of-the-art|all-in-one|reimagine|reimagined|unparalleled|unlock your potential|in today's fast-paced|look no further|to the next level|whether you're".split("|");
+  var BUZZ_RE = new RegExp("\\b(?:" + BUZZ.map(function (w) {
+    return w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/'/g, "['\u2019]");
+  }).join("|") + ")\\b", "gi");
+
+  function redact(value) {
+    return value.length <= 12 ? "****" : value.slice(0, 6) + "\u2026" + value.slice(-4) + " (" + value.length + " chars)";
+  }
+
+  function jwtRole(token) {
+    try {
+      var part = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+      while (part.length % 4) part += "=";
+      var payload = JSON.parse(atob(part));
+      return payload && typeof payload.role === "string" ? payload.role : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function lineAt(text, offset) {
+    var start = text.lastIndexOf("\n", offset - 1) + 1, end = text.indexOf("\n", offset);
+    var line = text.slice(start, end === -1 ? text.length : end).trim().replace(JWT, redact);
+    return line.length > 160 ? line.slice(0, 159) + "\u2026" : line;
+  }
+
+  function where(text, offset) {
+    return "pasted text, line " + (text.slice(0, offset).split("\n").length);
+  }
+
+  function all(re, text) {
+    var hits = [], m;
+    re.lastIndex = 0;
+    while ((m = re.exec(text))) hits.push(m);
+    return hits;
+  }
+
+  function finding(id, severity, area, owner, whereText, evidence, why, fix) {
+    return { id: id, severity: severity, area: area, owner: owner, where: whereText, evidence: evidence,
+      why: why, fix: fix, verify: "python3 scripts/scan.py --only " + id + " ." };
+  }
+
+  // Why and Fix text is copied from scan.py, so the bench says what the scanner says.
+  function check(text) {
+    var found = [], asides = [], seen = {};
+
+    all(PREFIX, text).forEach(function (m) {
+      var name = m[0], prefix = m[1];
+      if (seen[name] || !SENSITIVE.test(name.slice(prefix.length))) return;
+      seen[name] = true;
+      found.push(finding("S01", "P0", "secrets", "AGENT", where(text, m.index), lineAt(text, m.index),
+        "Bundlers inline every " + prefix + " variable into the JavaScript sent to every visitor, so anyone can read " +
+        name + " in the browser's dev tools.",
+        "Rename it without the " + prefix + " prefix, read it only in server code (route handler, server action, " +
+        "edge function), and rotate the key if a build with it ever shipped."));
+    });
+
+    all(JWT, text).forEach(function (m) {
+      var role = jwtRole(m[0]);
+      if (role === "service_role") {
+        found.push(finding("S02", "P0", "secrets", "HUMAN", where(text, m.index), "Supabase service_role JWT " + redact(m[0]),
+          "Anyone who can read this file (a teammate, a leaked build, a public repo, a bot scanning GitHub) can use " +
+          "the key to spend money or read data in your account.",
+          "Move the value to an environment variable (host dashboard or a git-ignored .env file), then rotate the " +
+          "key in the provider dashboard: removing it from code does not un-leak it."));
+      } else if (role) {
+        asides.push("Found a JWT with role “" + role + "”. " + (role === "anon"
+          ? "That is the public anon key, which is meant to ship to the browser, so it is not a finding."
+          : "Only role service_role is a finding."));
+      }
+    });
+
+    all(BROWSER_SDK, text).slice(0, 1).forEach(function (m) {
+      found.push(finding("S07", "P0", "secrets", "AGENT", where(text, m.index), lineAt(text, m.index),
+        "The AI provider key sits in JavaScript every visitor downloads, so anyone can copy it and bill your account.",
+        "Call the model from a server route or edge function with the key in a server-only env var, and remove " +
+        "dangerouslyAllowBrowser."));
+    });
+
+    all(FONTS, text).slice(0, 1).forEach(function (m) {
+      found.push(finding("L01", "P1", "legal", "AGENT", where(text, m.index), lineAt(text, m.index),
+        "Each page view sends the visitor's IP address to Google before any consent; a Munich court awarded " +
+        "€100 to one visitor for this in 2022.",
+        "Self-host the font: `next/font/google` (downloads at build time), `@fontsource/<family>`, or woff2 " +
+        "files in public/."));
+    });
+
+    all(DEFAULT_TITLE, text).forEach(function (m) {
+      found.push(finding("D15", "P2", "seo", "AGENT", where(text, m.index), lineAt(text, m.index),
+        "Search results and link previews show the scaffold's name instead of your product's.",
+        "Set a real title and description in the root metadata (`export const metadata = { title, description }` " +
+        "or the <title> in index.html)."));
+    });
+
+    var counts = {}, order = [], total = 0;
+    all(BUZZ_RE, text).forEach(function (m) {
+      var word = m[0].toLowerCase().replace(/’/g, "'");
+      if (!counts[word]) { counts[word] = 0; order.push(word); }
+      counts[word] += 1;
+      total += 1;
+    });
+    order.sort(function (a, b) { return counts[b] - counts[a]; });
+    var tally = order.map(function (w) { return w + " ×" + counts[w]; }).join(", ");
+    if (total >= 3) {
+      found.push(finding("D12", "P3", "copy", "AGENT", "pasted text", total + " buzzwords: " + tally,
+        "Words like '" + BUZZ[0] + "' and '" + BUZZ[2] + "' are what visitors now recognize as AI-written copy, " +
+        "and they say nothing specific about the product.",
+        "Replace each with the concrete thing the product does, with a number or example where possible."));
+    } else if (total) {
+      asides.push("D12: " + total + " buzzword" + (total === 1 ? "" : "s") + " (" + tally +
+        "). The scanner fires at 3 or more across all user-facing files, so this alone passes.");
+    }
+
+    var rank = { P0: 0, P1: 1, P2: 2, P3: 3 };
+    found.sort(function (a, b) { return rank[a.severity] - rank[b.severity]; });
+    return { findings: found, asides: asides };
+  }
+
+  // ---- rendering, with DOM nodes only -----------------------------------------
+
+  function el(tag, cls, text) {
+    var node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text) node.textContent = text;
+    return node;
+  }
+
+  function printed(f) {
+    var box = el("div", "print"), pre = el("pre");
+    pre.appendChild(el("b", "", "### " + [f.id, f.severity, f.area, f.owner].join(" \u00b7 ")));
+    [["Where", f.where], ["Evidence", f.evidence], ["Why", f.why], ["Fix", f.fix], ["Verify", f.verify]].forEach(function (row) {
+      pre.appendChild(document.createTextNode("\n"));
+      pre.appendChild(el("span", "k", row[0] + ":"));
+      pre.appendChild(document.createTextNode(" " + row[1]));
+    });
+    box.appendChild(pre);
+    return box;
+  }
+
+  var box = document.getElementById("line"), summary = document.getElementById("summary"),
+      results = document.getElementById("results"), scale = document.getElementById("scale").children,
+      previous = "";
+
+  function render() {
+    var text = box.value, out = check(text), levels = {};
+    out.findings.forEach(function (f) { levels[f.severity] = true; });
+
+    for (var i = 0; i < scale.length; i++) {
+      var level = "P" + i, on = !!levels[level];
+      scale[i].className = on ? "on" + (i > 1 ? " lo" : "") + (previous.indexOf(level) === -1 ? " new" : "") : "";
+    }
+    previous = Object.keys(levels).join(" ");
+
+    if (!text.trim()) {
+      summary.textContent = "Paste a line, or load a sample.";
+    } else if (!out.findings.length) {
+      summary.textContent = "Clean. None of these six checks fired.";
+    } else {
+      summary.textContent = out.findings.length + (out.findings.length === 1 ? " finding: " : " findings: ") +
+        out.findings.map(function (f) { return f.id + " " + f.severity; }).join(", ") + ".";
+    }
+
+    while (results.firstChild) results.removeChild(results.firstChild);
+    out.findings.forEach(function (f) { results.appendChild(printed(f)); });
+    out.asides.forEach(function (a) { results.appendChild(el("p", "aside", a)); });
+  }
+
+  // ---- samples ----------------------------------------------------------------
+
+  function b64url(obj) {
+    return btoa(JSON.stringify(obj)).replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
+  }
+  function demoJwt(role) {
+    return b64url({ alg: "HS256", typ: "JWT" }) + "." +
+      b64url({ iss: "supabase", ref: "demoprojectrefdemo00", role: role, iat: 1767225600, exp: 2082758400 }) +
+      ".demo-signature-not-a-real-key-0000000000000";
+  }
+  var SAMPLES = {
+    // polish-website-ignore S01,S07 demo line for the bench, not real code
+    openai: "const openai = new OpenAI({ apiKey: import.meta.env.VITE_OPENAI_API_KEY, dangerouslyAllowBrowser: true })",
+    service: "const admin = createClient(SUPABASE_URL, \"" + demoJwt("service_role") + "\")",
+    anon: "const supabase = createClient(SUPABASE_URL, \"" + demoJwt("anon") + "\")",
+    // polish-website-ignore L01 demo line for the bench, the page itself loads no fonts
+    fonts: "<link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap\">",
+    // polish-website-ignore D15 demo line for the bench, the real title is set in head
+    title: "<title>Vite + React + TS</title>",
+    hero: "Elevate your workflow with seamless, cutting-edge automation."
+  };
+
+  Array.prototype.forEach.call(document.querySelectorAll("[data-sample]"), function (button) {
+    button.addEventListener("click", function () {
+      box.value = SAMPLES[button.getAttribute("data-sample")];
+      render();
+      box.focus();
+    });
+  });
+  box.addEventListener("input", render);
+  box.value = SAMPLES.openai;
+  render();
+
+  // ---- copy buttons -----------------------------------------------------------
+
+  var status = document.getElementById("copy-status");
+  Array.prototype.forEach.call(document.querySelectorAll("[data-copy]"), function (button) {
+    button.addEventListener("click", function () {
+      var code = document.getElementById(button.getAttribute("data-copy"));
+      function done(ok) {
+        button.textContent = ok ? "Copied" : "Selected";
+        status.textContent = ok ? "Copied to the clipboard." : "Copy was blocked. The text is selected, so press Ctrl+C or Cmd+C.";
+        setTimeout(function () { button.textContent = "Copy"; }, 2000);
+      }
+      function selectIt() {
+        var range = document.createRange();
+        range.selectNodeContents(code);
+        var sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(code.textContent).then(function () { done(true); }, function () { selectIt(); done(false); });
+      } else {
+        selectIt();
+        done(false);
+      }
+    });
+  });
+})();
+</script>
+</body>
+</html>

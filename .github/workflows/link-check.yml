@@ -1,0 +1,39 @@
+name: Check links
+
+on:
+  pull_request:
+    paths:
+      - "**/*.md"
+      - "web/**"
+  schedule:
+    - cron: "17 9 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  links:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Restore link cache
+        uses: actions/cache@v6
+        with:
+          path: .lycheecache
+          key: lychee-${{ github.sha }}
+          restore-keys: lychee-
+      - name: Check links
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --no-progress
+            --root-dir ${{ github.workspace }}
+            --cache
+            --max-cache-age 1d
+            --accept 200,206,429
+            --exclude 'https://skills\.sh/'
+            --exclude '^https?://localhost'
+            '**/*.md'
+            'web/index.html'
+          fail: ${{ github.event_name != 'pull_request' }}

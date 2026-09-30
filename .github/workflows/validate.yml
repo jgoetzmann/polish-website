@@ -1,0 +1,39 @@
+name: Check package
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Check package files
+        run: python3 scripts/validate-package.py
+      - name: Run script tests
+        run: python3 scripts/selftest.py
+      - name: Audit our own landing page
+        run: python3 scripts/scan.py web --fail-on P3
+      - name: Check skill discovery
+        run: npx --yes skills@1.5.20 add . --list
+      - name: Check Claude marketplace
+        run: |
+          npm install --global @anthropic-ai/claude-code@2.1.142
+          claude plugin validate .

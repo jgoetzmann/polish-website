@@ -1,0 +1,3 @@
+# Findings the owner has accepted: <ID[,ID]> <path glob> <reason>
+# The scanner's own rules and tests contain the patterns they look for.
+S01,S16,S19,D06 scripts/* rule patterns and test fixtures, not application code

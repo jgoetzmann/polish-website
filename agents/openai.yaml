@@ -1,0 +1,4 @@
+interface:
+  display_name: "polish-website"
+  short_description: "Audit and fix an AI-built site or app before launch"
+  default_prompt: "Use $polish-website on this app: map it, run the scan and probe scripts, audit security, legal, design and store readiness, then fix what code can fix and hand me the rest."

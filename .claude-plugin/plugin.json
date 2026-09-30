@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "polish-website",
+  "description": "Audit and fix an AI-built site or app before launch: security, legal, AI tells, and app store readiness. Scripts gather evidence, blind agents check what's deployed.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Jack Goetzmann",
+    "url": "https://github.com/jgoetzmann"
+  },
+  "homepage": "https://github.com/jgoetzmann/polish-website",
+  "repository": "https://github.com/jgoetzmann/polish-website",
+  "license": "MIT",
+  "keywords": ["security", "supabase", "rls", "gdpr", "accessibility", "app-store", "launch", "claude-code"],
+  "skills": ["./"]
+}

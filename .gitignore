@@ -1,0 +1,16 @@
+# Generated at deploy time by copying the root SKILL.md into the output directory.
+# Committing it would put two SKILL.md files in the repo, which the validator rejects.
+web/SKILL.md
+
+# The skill's own scratch directory, in case someone audits this repo with it.
+.polish-website/
+
+# Secrets never belong in this repo. The scanner's own check (S05) holds us to it.
+.env*
+!.env.example
+
+.vercel
+node_modules/
+__pycache__/
+*.pyc
+.DS_Store

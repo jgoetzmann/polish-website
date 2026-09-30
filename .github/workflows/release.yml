@@ -1,0 +1,103 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Check package files
+        run: python3 scripts/validate-package.py
+      - name: Read package version
+        id: version
+        run: |
+          python3 -c '
+          import os, pathlib, sys
+          text = pathlib.Path("SKILL.md").read_text(encoding="utf-8")
+          if not text.startswith("---"): sys.exit("SKILL.md: no YAML frontmatter at the top of the file")
+          front = text.split("---", 2)[1]
+          version = next((line.split(":", 1)[1].strip().strip("\"") for line in front.splitlines() if line.strip().startswith("version:")), "")
+          if not version: sys.exit("SKILL.md: could not read metadata.version from the frontmatter")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out: out.write("version=" + version + "\n")
+          print("SKILL.md metadata.version = " + version)
+          '
+      - name: Assert tag matches package version
+        if: github.event_name == 'push'
+        env:
+          SKILL_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          if [ "$TAG_VERSION" != "$SKILL_VERSION" ]; then
+            echo "::error::Tag and package version disagree. Fix one of them, then retag."
+            echo "  tag:                      $GITHUB_REF_NAME (version $TAG_VERSION)"
+            echo "  SKILL.md metadata.version: $SKILL_VERSION"
+            exit 1
+          fi
+          echo "Tag $GITHUB_REF_NAME matches SKILL.md metadata.version $SKILL_VERSION."
+      - name: Build release archive
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          mkdir -p dist/polish-website
+          cp -R SKILL.md README.md LICENSE agents scripts docs .claude-plugin dist/polish-website/
+          find dist -name __pycache__ -prune -exec rm -rf {} +
+          (cd dist && zip -r "../polish-website-$VERSION.zip" polish-website)
+          unzip -l "polish-website-$VERSION.zip"
+      - name: Extract release notes
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          python3 -c '
+          import os, pathlib, sys
+          version = os.environ["VERSION"]
+          marker = "- **" + version + "**"
+          lines = pathlib.Path("README.md").read_text(encoding="utf-8").splitlines()
+          start = next((i for i, line in enumerate(lines) if line.startswith(marker)), -1)
+          if start < 0: sys.exit("README.md version history has no entry starting with: " + marker)
+          ends = [i for i, line in enumerate(lines) if i > start and (line.startswith("- **") or line.startswith("</details>") or line.startswith("## "))]
+          notes = "\n".join(lines[start:ends[0] if ends else len(lines)]).strip()
+          if not notes: sys.exit("README.md entry for " + version + " is empty")
+          pathlib.Path("release-notes.md").write_text(notes + "\n", encoding="utf-8")
+          print(notes)
+          '
+      - name: Publish release
+        if: github.event_name == 'push'
+        uses: softprops/action-gh-release@v3
+        with:
+          name: v${{ steps.version.outputs.version }}
+          tag_name: ${{ github.ref_name }}
+          body_path: release-notes.md
+          files: polish-website-${{ steps.version.outputs.version }}.zip
+          fail_on_unmatched_files: true
+      - name: Dry run summary
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          {
+            echo "## Dry run — nothing published"
+            echo ""
+            echo "Version \`$VERSION\` validated, archived, and release notes extracted."
+            echo "Push tag \`v$VERSION\` to publish."
+            echo ""
+            echo "### Release notes"
+            echo ""
+            cat release-notes.md
+          } >> "$GITHUB_STEP_SUMMARY"

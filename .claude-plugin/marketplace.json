@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace-manifest.json",
+  "name": "polish-website",
+  "owner": {
+    "name": "Jack Goetzmann",
+    "url": "https://github.com/jgoetzmann"
+  },
+  "description": "Install polish-website as a Claude plugin.",
+  "plugins": [
+    {
+      "name": "polish-website",
+      "source": "./",
+      "description": "Audit and fix an AI-built site or app before launch: security, legal, AI tells, and app store readiness. Scripts gather evidence, blind agents check what's deployed.",
+      "license": "MIT",
+      "keywords": ["security", "supabase", "rls", "gdpr", "accessibility", "app-store", "launch", "claude-code"]
+    }
+  ]
+}

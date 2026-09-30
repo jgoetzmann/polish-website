@@ -1,0 +1,29 @@
+# polish-website
+
+> An agent skill that audits and fixes an AI-built ("vibecoded") website or app before launch, across security, legal compliance, AI-looking design and copy, and App Store and Google Play readiness. It is Markdown prompts plus two Python scripts that need only the standard library, so it works with any agent that supports skills. MIT licensed. Not legal advice, and not a substitute for a professional pentest of a system that holds money or health data.
+
+How it works:
+
+- Two scripts gather evidence first. `scripts/scan.py` reads the repo: secrets, RLS in migrations, client-side writes to privilege columns, unverified webhooks, trackers, legal pages, AI tells, and store config. `scripts/probe.py` reads the deployed site: bundles, headers, exposed files, source maps, CORS, metadata, and trackers in the first HTML. `--list-rules` on either prints every check.
+- Read-only auditor agents (security, legal, design, stores) confirm or dismiss every script finding.
+- Two blind reviewers check what is deployed. The stranger gets only the URL. The attacker gets a URL and two test accounts, runs against staging, and returns PASS, FAIL, or N/A for A1 through A10.
+- Fixes land by file ownership, in waves, one commit per wave. Each fix is checked with the finding's Verify command.
+- Every finding has the same shape: a header line `### <id> · <severity> · <area> · <owner>`, then Where, Evidence (secrets redacted), Why, Fix, and Verify.
+- Severity: P0 is exploitable now by an anonymous visitor, or a certain store rejection. P1 is exploitable by a signed-in user, a legal duty with a per-incident penalty, or a likely store rejection. P2 is hardening, or an item that depends on a fact the owner must confirm. P3 is an AI tell, polish, or anything cosmetic.
+- Seven phases: 0 map, 1 scan, 2 audit, 3 triage and report, 4 fix, 5 verify, 6 handoff. Nothing in the code changes before the owner has seen the P0 and P1 list.
+
+Install:
+
+- Skills CLI: `npx skills add jgoetzmann/polish-website --global`
+- Claude Code 2.1.142 or newer: `/plugin marketplace add jgoetzmann/polish-website`, then `/plugin install polish-website@polish-website`
+
+## Docs
+
+- [SKILL.md](https://polish-website.vercel.app/SKILL.md): the skill itself, with the phases, the finding shape, the severity table, and the launch gate
+- [README](https://github.com/jgoetzmann/polish-website#readme): overview, usage, and install
+- [Source](https://github.com/jgoetzmann/polish-website): agent prompts, scripts, tests, and docs
+
+## Optional
+
+- [Design rationale](https://github.com/jgoetzmann/polish-website/blob/main/docs/BUILD-POLISH-WEBSITE.md): which failure each rule is built against
+- [Rules](https://github.com/jgoetzmann/polish-website/blob/main/docs/RULES.md): every check, generated from the scripts
